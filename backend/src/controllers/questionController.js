@@ -26,7 +26,7 @@ exports.createQuestion = catchAsync(async (req, res, next) => {
       authorId: req.user.id
     },
     include: {
-      author: { select: { name: true, isGuest: true } }
+      author: { select: { id: true, name: true, isGuest: true } }
     }
   });
 
