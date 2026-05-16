@@ -24,7 +24,7 @@ app.use('/api/questions', questionRoutes);
 app.use('/api/comments', commentRoutes);
 
 // Якщо запит тут, значить жоден роут вище його не перехопив
-app.all('*', (req, res, next) => {
+app.all(/(.*)/, (req, res, next) => {
   next(new AppError(`Маршрут ${req.originalUrl} не знайдено на сервері`, 404));
 });
 

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Outlet, Link } from 'react-router-dom';
-import { Moon, Sun, MessageSquare } from 'lucide-react';
+import { Moon, Sun } from 'lucide-react';
 import { useAuthStore } from '../store/useAuthStore';
 
 export default function Layout() {
@@ -29,8 +29,19 @@ export default function Layout() {
     <div className="min-h-screen flex flex-col font-sans">
       <header className="w-full bg-surface-light dark:bg-surface-dark shadow-sm py-4 px-6 flex items-center justify-between transition-colors duration-200">
         <Link to="/" className="flex items-center gap-2 text-brand font-bold text-2xl tracking-tight">
-          <MessageSquare className="w-8 h-8" />
-          <span>AskMe</span>
+          <img 
+            src="/logo.svg" 
+            alt="question.io logo" 
+            className="w-8 h-8 object-contain bg-slate-200 dark:bg-slate-700 rounded-md" 
+            onError={(e) => {
+              e.target.style.display = 'none';
+              e.target.nextSibling.style.display = 'flex';
+            }}
+          />
+          <div className="hidden w-8 h-8 bg-brand text-white items-center justify-center rounded-lg font-black text-lg">
+            q
+          </div>
+          <span>question.io</span>
         </Link>
 
         <div className="flex items-center gap-4">
