@@ -1,13 +1,115 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
 
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String?  @unique    
+  password     String?             
+  name         String
+  isGuest      Boolean  @default(false)
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  boards       Board[]            
+  questions    Question[]         
+  comments     Comment[]          
+  votes        Vote[]             
+  
+  @@index([email])
+}
+
+model Board {
+  id           String      @id @default(uuid())
+  title        String
+  code         String      @unique @db.Char(6)  
+  slug         String      @unique 
+  status       BoardStatus @default(ACTIVE)
+  
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  ownerId      String
+  owner        User        @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  questions    Question[]
+  
+  @@index([code])
+  @@index([slug])
+  @@index([ownerId])
+}
+
+enum BoardStatus {
+  ACTIVE
+  PAUSED
+  CLOSED
+}
+
+model Question {
+  id           String         @id @default(uuid())
+  content      String         @db.Text
+  imageUrl     String?
+  status       QuestionStatus @default(ACTIVE)
+  rating       Int            @default(0)
+  
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  
+  authorId     String
+  author       User           @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  boardId      String
+  board        Board          @relation(fields: [boardId], references: [id], onDelete: Cascade)
+
+  comments     Comment[]
+  votes        Vote[]
+  
+  @@index([boardId, status, rating])
+  @@index([authorId])
+}
+
+enum QuestionStatus {
+  ACTIVE
+  ANSWERED
+}
+
+model Comment {
+  id           String   @id @default(uuid())
+  content      String   @db.Text
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  authorId     String
+  author       User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  questionId   String
+  question     Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  
+  @@index([questionId, createdAt])
+  @@index([authorId])
+}
+
+model Vote {
+  id           String   @id @default(uuid())
+  value        Int
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  questionId   String
+  question     Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, questionId])
+  @@index([questionId])
 }
