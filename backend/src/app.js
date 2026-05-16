@@ -14,9 +14,8 @@ app.use(express.json());
 
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
-// підключка рутів
 app.use('/api/auth', authRoutes);
-// app.use('/api/boards', boardRoutes);
+app.use('/api/boards', boardRoutes);
 
 // Якщо запит тут, значить жоден роут вище його не перехопив
 app.all('*', (req, res, next) => {
