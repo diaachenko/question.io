@@ -28,6 +28,32 @@ export default function Home() {
     }
   };
 
+  const createTestBoard = async () => {
+    try {
+      setIsLoading(true);
+      const authRes = await api.post('/auth/register', {
+        email: `admin${Date.now()}@test.com`,
+        password: 'password123',
+        name: 'Організатор'
+      });
+
+      localStorage.setItem('token', authRes.data.token);
+
+      const boardRes = await api.post('/boards', {
+        title: 'Тестова Q&A Сесія'
+      });
+
+      alert(`✅ Дошку успішно створено!\nКод доступу: ${boardRes.data.data.board.code}\n\nТепер введи цей код у поле!`);
+ 
+      localStorage.removeItem('token');
+      
+    } catch (err) {
+      alert('Помилка: ' + (err.response?.data?.message || err.message));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="flex-1 flex items-center justify-center p-4">
       <div className="w-full max-w-md bg-surface-light dark:bg-surface-dark rounded-3xl shadow-xl p-8 transition-colors duration-200">
@@ -56,6 +82,14 @@ export default function Home() {
             >
               <ArrowRight className="w-6 h-6" />
             </button>
+            {/* СЕКРЕТНА КНОПКА (видалимо її пізніше) */}
+          <button
+            type="button"
+            onClick={createTestBoard}
+            className="absolute -bottom-16 left-0 w-full text-brand text-sm font-bold hover:underline"
+          >
+            Створити тестову дошку (Debug)
+          </button>
           </div>
 
           {error && (

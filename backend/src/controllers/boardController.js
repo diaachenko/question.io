@@ -109,3 +109,9 @@ exports.deleteBoard = catchAsync(async (req, res, next) => {
 
   res.status(204).json({ status: 'success', data: null });
 });
+
+exports.getBoardById = catchAsync(async (req, res, next) => {
+  const board = await prisma.board.findUnique({ where: { id: req.params.id } });
+  if (!board) return next(new AppError('Дошку не знайдено', 404));
+  res.status(200).json({ status: 'success', data: { board } });
+});
