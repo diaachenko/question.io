@@ -87,7 +87,7 @@ exports.updateBoardStatus = catchAsync(async (req, res, next) => {
     data: { status }
   });
 
-  // додавання сокет події для зміни статусу ірл
+  req.app.get('io').to(id).emit('board_status_changed', status);
 
   res.status(200).json({ status: 'success', data: { board: updatedBoard } });
 });
