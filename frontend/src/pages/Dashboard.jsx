@@ -5,7 +5,7 @@ import { useAuthStore } from '../store/useAuthStore';
 import api from '../services/api';
 
 export default function Dashboard() {
-  const { isAuthenticated, user, logout } = useAuthStore();
+  const { user, logout } = useAuthStore();
   const navigate = useNavigate();
   
   const [boards, setBoards] = useState([]);
@@ -13,45 +13,46 @@ export default function Dashboard() {
   const [isCreating, setIsCreating] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Перевірка доступу (тільки для повноцінних юзерів, не гостей)
+  // 1. Завантаження дошок (спрацьовує при відкритті сторінки)
   useEffect(() => {
-    if (!isAuthenticated) {
-      navigate('/login');
-    } else if (user?.isGuest) {
-      // Якщо це гість, виходимо з акаунту і кидаємо на логін
+    // Якщо немає юзера або це гість — викидаємо на сторінку входу
+    if (!user || user.isGuest) {
       logout();
       navigate('/login');
-    } else {
-      loadBoards();
+      return;
     }
-  }, [isAuthenticated, user, navigate, logout]);
 
-  const loadBoards = async () => {
-    try {
-      const res = await api.get('/boards/my');
-      setBoards(res.data.data.boards);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    const fetchMyBoards = async () => {
+      try {
+        const res = await api.get('/boards/my');
+        setBoards(res.data.data.boards);
+      } catch (err) {
+        console.error("Помилка завантаження дошок:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
+    fetchMyBoards();
+  }, [user, navigate, logout]);
+
+  // 2. Створення нової дошки
   const handleCreateBoard = async (e) => {
     e.preventDefault();
     if (!newTitle.trim()) return;
     setIsCreating(true);
     try {
       const res = await api.post('/boards', { title: newTitle });
-      setBoards([res.data.data.board, ...boards]); // Додаємо нову дошку наверх
+      setBoards([res.data.data.board, ...boards]);
       setNewTitle('');
     } catch (err) {
-      alert(err.response?.data?.message || 'Помилка створення');
+      alert(err.response?.data?.message || 'Помилка створення дошки');
     } finally {
       setIsCreating(false);
     }
   };
 
+  // 3. Зміна статусу дошки
   const handleChangeStatus = async (id, status) => {
     try {
       await api.patch(`/boards/${id}/status`, { status });
@@ -61,6 +62,7 @@ export default function Dashboard() {
     }
   };
 
+  // 4. Видалення дошки
   const handleDelete = async (id) => {
     if (!window.confirm('Видалити цю сесію назавжди? Усі питання та коментарі будуть втрачені!')) return;
     try {
@@ -71,27 +73,35 @@ export default function Dashboard() {
     }
   };
 
-  if (isLoading) return <div className="p-8 text-center text-slate-500">Завантаження...</div>;
+  // Екран завантаження
+  if (isLoading) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-8">
+        <div className="text-xl font-bold text-slate-500">Завантажуємо ваші сесії...</div>
+      </div>
+    );
+  }
 
+  // Основний інтерфейс
   return (
-    <div className="flex-1 max-w-5xl w-full mx-auto p-4 flex flex-col gap-8 py-10">
+    <div className="flex-1 max-w-6xl w-full mx-auto p-4 flex flex-col gap-8 py-10">
       
-      <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+      {/* Шапка адмінки: Заголовок і Форма створення */}
+      <div className="flex flex-col md:flex-row items-center justify-between gap-6 bg-surface-light dark:bg-surface-dark p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800">
         <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Мої Сесії</h1>
         
-        {/* Форма створення */}
-        <form onSubmit={handleCreateBoard} className="flex items-center gap-2 w-full md:w-auto">
+        <form onSubmit={handleCreateBoard} className="flex items-center gap-3 w-full md:w-auto">
           <input 
             type="text" 
             value={newTitle} 
             onChange={(e) => setNewTitle(e.target.value)} 
             placeholder="Назва нової сесії..." 
-            className="flex-1 md:w-64 bg-surface-light dark:bg-surface-dark border border-slate-200 dark:border-slate-800 rounded-xl py-2.5 px-4 outline-none focus:border-brand"
+            className="flex-1 md:w-72 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white rounded-xl py-3 px-4 outline-none focus:ring-2 focus:ring-brand/50 transition-all placeholder:text-slate-400"
           />
           <button 
             type="submit" 
             disabled={isCreating || !newTitle.trim()} 
-            className="bg-brand text-white px-4 py-2.5 rounded-xl font-medium hover:bg-brand-hover flex items-center gap-2 disabled:opacity-50"
+            className="bg-brand text-white px-6 py-3 rounded-xl font-bold hover:bg-brand-hover flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-md shadow-brand/20"
           >
             <Plus className="w-5 h-5" /> Створити
           </button>
@@ -100,48 +110,60 @@ export default function Dashboard() {
 
       {/* Список дошок */}
       {boards.length === 0 ? (
-        <div className="text-center p-12 bg-surface-light dark:bg-surface-dark rounded-3xl border border-slate-100 dark:border-slate-800">
-          <p className="text-slate-500 mb-4">У вас ще немає жодної створеної сесії.</p>
+        <div className="text-center p-16 bg-surface-light dark:bg-surface-dark rounded-3xl border border-slate-100 dark:border-slate-800 flex flex-col items-center justify-center shadow-sm">
+          <p className="text-xl font-bold text-slate-700 dark:text-slate-300 mb-2">У вас ще немає створених сесій</p>
+          <p className="text-slate-500">Використайте форму вище, щоб створити свою першу Q&A дошку.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {boards.map(board => (
-            <div key={board.id} className="bg-surface-light dark:bg-surface-dark p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col relative group">
+            <div key={board.id} className="bg-surface-light dark:bg-surface-dark p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col relative group transition-all hover:shadow-md">
               
+              {/* Кнопка видалення (з'являється при наведенні) */}
               <button 
                 onClick={() => handleDelete(board.id)} 
-                className="absolute top-4 right-4 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                className="absolute top-5 right-5 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20"
                 title="Видалити сесію"
               >
                 <Trash2 className="w-5 h-5" />
               </button>
 
-              <h3 className="text-xl font-bold mb-1 pr-6">{board.title}</h3>
-              <p className="text-slate-500 font-mono mb-4 text-lg">#{board.code}</p>
+              <h3 className="text-xl font-bold mb-2 pr-10 text-slate-900 dark:text-white truncate" title={board.title}>
+                {board.title}
+              </h3>
+              
+              <div className="flex items-center gap-2 mb-6">
+                <span className="text-sm text-slate-500">Код:</span>
+                <span className="text-brand font-mono font-bold text-lg bg-brand/10 px-2 py-0.5 rounded-md">
+                  {board.code}
+                </span>
+              </div>
 
-              <div className="flex-1"></div> {/* Розпірка */}
+              <div className="flex-1"></div>
 
-              <div className="flex flex-col gap-3 mt-4">
+              {/* Управління дошкою */}
+              <div className="flex flex-col gap-3 mt-4 pt-4 border-t border-slate-100 dark:border-slate-800">
                 <select 
                   value={board.status} 
                   onChange={(e) => handleChangeStatus(board.id, e.target.value)}
-                  className={`w-full p-2 rounded-lg text-sm font-bold outline-none cursor-pointer border-none
-                    ${board.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 
-                      board.status === 'PAUSED' ? 'bg-yellow-100 text-yellow-700' : 
-                      'bg-red-100 text-red-700'}`}
+                  className={`w-full p-3 rounded-xl text-sm font-bold outline-none cursor-pointer border-none transition-colors appearance-none text-center
+                    ${board.status === 'ACTIVE' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 
+                      board.status === 'PAUSED' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' : 
+                      'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}
                 >
-                  <option value="ACTIVE">Активна (Прийом питань)</option>
-                  <option value="PAUSED">Пауза (Тільки читання)</option>
-                  <option value="CLOSED">Завершена (Архів)</option>
+                  <option value="ACTIVE"> Активна (Прийом питань)</option>
+                  <option value="PAUSED"> Пауза (Тільки читання)</option>
+                  <option value="CLOSED"> Завершена (Архів)</option>
                 </select>
 
                 <Link 
                   to={`/board/${board.id}`} 
-                  className="w-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 py-2 rounded-lg text-sm font-medium hover:bg-slate-200 dark:hover:bg-slate-700 flex items-center justify-center gap-2 transition-colors"
+                  className="w-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 py-3 rounded-xl text-sm font-bold hover:bg-slate-200 dark:hover:bg-slate-700 flex items-center justify-center gap-2 transition-colors"
                 >
                   Перейти до дошки <ExternalLink className="w-4 h-4" />
                 </Link>
               </div>
+              
             </div>
           ))}
         </div>
