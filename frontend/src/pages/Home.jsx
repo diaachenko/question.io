@@ -58,7 +58,11 @@ export default function Home() {
             </button>
           </div>
 
-          
+          {error && (
+            <p className="absolute -bottom-6 left-0 text-red-500 text-sm font-medium w-full text-center mt-2">
+              {error}
+            </p>
+          )}
         </form>
       </div>
     </div>

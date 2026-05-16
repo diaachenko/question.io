@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { io } from 'socket.io-client';
-import { Send, Image as ImageIcon, ThumbsUp, ThumbsDown, Trash2 } from 'lucide-react';
+import { Send, Image as ImageIcon, ThumbsUp, ThumbsDown, Trash2, Check, Copy } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { useAuthStore } from '../store/useAuthStore';
 import api from '../services/api';
@@ -15,6 +15,7 @@ export default function Board() {
   const [questions, setQuestions] = useState([]);
   const [comments, setComments] = useState({});
   
+  const [isCopied, setIsCopied] = useState(false);
   const [guestName, setGuestName] = useState('');
   const [newQuestion, setNewQuestion] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
@@ -30,13 +31,11 @@ export default function Board() {
     });
   };
 
-  useEffect(() => {
-    if (isAuthenticated && !user) {
-      api.get('/auth/me')
-        .then(res => setUser(res.data.data.user))
-        .catch(err => console.error('Не вдалося відновити користувача', err));
-    }
-  }, [isAuthenticated, user, setUser]);
+  const copyLink = () => {
+    navigator.clipboard.writeText(window.location.href);
+    setIsCopied(true);
+    setTimeout(() => setIsCopied(false), 2000); // Повертаємо іконку назад через 2 секунди
+  };
 
   useEffect(() => {
     const fetchBoard = async () => {
@@ -220,6 +219,13 @@ export default function Board() {
             </div>
           </div>
           <p className="text-slate-500 text-base">Код доступу: <span className="font-mono font-bold text-brand text-lg tracking-widest">{board.code}</span></p>
+          <button 
+              onClick={copyLink} 
+              className="flex items-center gap-1.5 px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-sm font-medium"
+            >
+              {isCopied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+              {isCopied ? 'Скопійовано!' : 'Копіювати лінк'}
+            </button>
         </div>
         
         <div className="flex flex-col items-center bg-white p-2 rounded-2xl shadow-sm">

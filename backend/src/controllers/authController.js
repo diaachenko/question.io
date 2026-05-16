@@ -1,3 +1,5 @@
+const { OAuth2Client } = require('google-auth-library');
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID || 'dummy-client-id');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const prisma = require('../utils/prisma');
@@ -71,4 +73,29 @@ exports.guestLogin = catchAsync(async (req, res, next) => {
   const token = signToken(user.id);
 
   res.status(201).json({ status: 'success', token, data: { user } });
+});
+
+exports.googleLogin = catchAsync(async (req, res, next) => {
+  const { token } = req.body;
+  if (!token) return next(new AppError('Токен Google відсутній', 400));
+
+  const ticket = await googleClient.verifyIdToken({
+    idToken: token,
+    audience: process.env.GOOGLE_CLIENT_ID,
+  });
+  
+  const { email, name } = ticket.getPayload();
+
+  let user = await prisma.user.findUnique({ where: { email } });
+
+  if (!user) {
+    user = await prisma.user.create({
+      data: { email, name, isGuest: false }
+    });
+  }
+
+  const jwtToken = signToken(user.id);
+  user.password = undefined;
+
+  res.status(200).json({ status: 'success', token: jwtToken, data: { user } });
 });

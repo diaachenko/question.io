@@ -7,6 +7,7 @@ const router = express.Router();
 router.post('/register', authController.register);
 router.post('/login', authController.login);
 router.post('/guest', authController.guestLogin);
+router.post('/google', authController.googleLogin);
 
 router.get('/me', protect, (req, res) => {
   req.user.password = undefined;
