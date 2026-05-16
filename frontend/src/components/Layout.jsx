@@ -55,7 +55,9 @@ export default function Layout() {
 
           {isAuthenticated && user && !user.isGuest ? (
             <div className="flex items-center gap-4">
-              <span className="text-sm font-medium hidden md:block">{user.name}</span>
+              <Link to="/admin" className="text-sm font-bold text-slate-700 dark:text-slate-200 hover:text-brand dark:hover:text-brand transition-colors hidden md:block">
+                {user.name}
+              </Link>
               <button onClick={logout} className="text-sm font-medium text-red-500 hover:underline">
                 Вийти
               </button>
