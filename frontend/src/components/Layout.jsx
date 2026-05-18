@@ -27,7 +27,7 @@ export default function Layout() {
 
   return (
     <div className="min-h-screen flex flex-col font-sans">
-      <header className="w-full bg-surface-light dark:bg-surface-dark shadow-sm py-4 px-6 flex items-center justify-between transition-colors duration-200">
+      <header className="sticky top-0 z-50 w-full bg-surface-light dark:bg-surface-dark shadow-sm py-4 px-6 flex items-center justify-between transition-colors duration-200">
         <Link to="/" className="flex items-center gap-2 text-brand font-bold text-2xl tracking-tight">
           <img 
             src="/logo.svg" 

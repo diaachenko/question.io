@@ -8,6 +8,7 @@ import api from '../services/api';
 
 export default function Board() {
   const { id } = useParams();
+  const baseUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000';
   const { isAuthenticated, setAuth, user, setUser } = useAuthStore();
   
   const [board, setBoard] = useState(null);
@@ -283,7 +284,7 @@ export default function Board() {
               <p className="text-slate-800 dark:text-slate-200 whitespace-pre-wrap text-[15px] leading-relaxed">{q.content}</p>
               
               {q.imageUrl && (
-                <img src={`http://localhost:5000${q.imageUrl}`} alt="Прикріплене" className="mt-4 rounded-xl max-h-72 object-contain bg-slate-100 dark:bg-slate-800 w-full" />
+                <img src={`${baseUrl}${q.imageUrl}`} ... />
               )}
               
               <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-3">

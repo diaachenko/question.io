@@ -5,7 +5,7 @@ import { useAuthStore } from '../store/useAuthStore';
 import api from '../services/api';
 
 export default function Dashboard() {
-  const { user, logout } = useAuthStore();
+  const { user, logout, isAuthLoading } = useAuthStore();
   const navigate = useNavigate();
   
   const [boards, setBoards] = useState([]);
@@ -13,9 +13,9 @@ export default function Dashboard() {
   const [isCreating, setIsCreating] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // 1. Завантаження дошок (спрацьовує при відкритті сторінки)
   useEffect(() => {
-    // Якщо немає юзера або це гість — викидаємо на сторінку входу
+    if (isAuthLoading) return;
+
     if (!user || user.isGuest) {
       logout();
       navigate('/login');
@@ -34,9 +34,8 @@ export default function Dashboard() {
     };
 
     fetchMyBoards();
-  }, [user, navigate, logout]);
+  }, [user, navigate, logout, isAuthLoading]);
 
-  // 2. Створення нової дошки
   const handleCreateBoard = async (e) => {
     e.preventDefault();
     if (!newTitle.trim()) return;
@@ -52,7 +51,6 @@ export default function Dashboard() {
     }
   };
 
-  // 3. Зміна статусу дошки
   const handleChangeStatus = async (id, status) => {
     try {
       await api.patch(`/boards/${id}/status`, { status });
@@ -62,7 +60,6 @@ export default function Dashboard() {
     }
   };
 
-  // 4. Видалення дошки
   const handleDelete = async (id) => {
     if (!window.confirm('Видалити цю сесію назавжди? Усі питання та коментарі будуть втрачені!')) return;
     try {
@@ -73,7 +70,6 @@ export default function Dashboard() {
     }
   };
 
-  // Екран завантаження
   if (isLoading) {
     return (
       <div className="flex-1 flex items-center justify-center p-8">
@@ -82,11 +78,8 @@ export default function Dashboard() {
     );
   }
 
-  // Основний інтерфейс
   return (
     <div className="flex-1 max-w-6xl w-full mx-auto p-4 flex flex-col gap-8 py-10">
-      
-      {/* Шапка адмінки: Заголовок і Форма створення */}
       <div className="flex flex-col md:flex-row items-center justify-between gap-6 bg-surface-light dark:bg-surface-dark p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800">
         <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Мої Сесії</h1>
         
@@ -107,8 +100,6 @@ export default function Dashboard() {
           </button>
         </form>
       </div>
-
-      {/* Список дошок */}
       {boards.length === 0 ? (
         <div className="text-center p-16 bg-surface-light dark:bg-surface-dark rounded-3xl border border-slate-100 dark:border-slate-800 flex flex-col items-center justify-center shadow-sm">
           <p className="text-xl font-bold text-slate-700 dark:text-slate-300 mb-2">У вас ще немає створених сесій</p>
@@ -118,8 +109,6 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {boards.map(board => (
             <div key={board.id} className="bg-surface-light dark:bg-surface-dark p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col relative group transition-all hover:shadow-md">
-              
-              {/* Кнопка видалення (з'являється при наведенні) */}
               <button 
                 onClick={() => handleDelete(board.id)} 
                 className="absolute top-5 right-5 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20"
@@ -141,7 +130,6 @@ export default function Dashboard() {
 
               <div className="flex-1"></div>
 
-              {/* Управління дошкою */}
               <div className="flex flex-col gap-3 mt-4 pt-4 border-t border-slate-100 dark:border-slate-800">
                 <select 
                   value={board.status} 
@@ -163,7 +151,6 @@ export default function Dashboard() {
                   Перейти до дошки <ExternalLink className="w-4 h-4" />
                 </Link>
               </div>
-              
             </div>
           ))}
         </div>
